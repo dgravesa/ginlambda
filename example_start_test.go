@@ -16,6 +16,6 @@ func init() {
 	})
 }
 
-func Example() {
+func ExampleStart() {
 	ginlambda.Start(r)
 }
