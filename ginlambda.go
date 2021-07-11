@@ -2,8 +2,10 @@ package ginlambda
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -43,14 +45,27 @@ func NewHandler(r *gin.Engine) HandlerFunc {
 func constructHTTPRequestFromAPIRequest(
 	ctx context.Context, request events.APIGatewayProxyRequest) (*http.Request, bool, error) {
 
+	useMultiValueHeader := (request.Headers == nil)
+
+	// initialize request query
+	var queryStr string
+	if useMultiValueHeader {
+		queryStr = url.Values(request.MultiValueQueryStringParameters).Encode()
+	} else {
+		queryValues := make(url.Values)
+		for k, v := range request.QueryStringParameters {
+			queryValues.Set(k, v)
+		}
+		queryStr = queryValues.Encode()
+	}
+
 	// initialize request with context
 	reader := ioutil.NopCloser(strings.NewReader(request.Body))
-	httpRequest, err := http.NewRequestWithContext(ctx, request.HTTPMethod, request.Path, reader)
+	fullPath := fmt.Sprintf("%s?%s", request.Path, queryStr)
+	httpRequest, err := http.NewRequestWithContext(ctx, request.HTTPMethod, fullPath, reader)
 	if err != nil {
 		return nil, false, err
 	}
-
-	useMultiValueHeader := (request.Headers == nil)
 
 	// initialize request header
 	if useMultiValueHeader {
@@ -62,19 +77,6 @@ func constructHTTPRequestFromAPIRequest(
 	} else {
 		for k, v := range request.Headers {
 			httpRequest.Header.Set(k, v)
-		}
-	}
-
-	// initialize request query
-	if useMultiValueHeader {
-		for k, vs := range request.MultiValueQueryStringParameters {
-			for _, v := range vs {
-				httpRequest.URL.Query().Add(k, v)
-			}
-		}
-	} else {
-		for k, v := range request.QueryStringParameters {
-			httpRequest.URL.Query().Set(k, v)
 		}
 	}
 
