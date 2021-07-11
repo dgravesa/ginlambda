@@ -13,24 +13,24 @@ Set up your Gin routes as you normally would, and instead of calling *lambda.Sta
 package main
 
 import (
-	"net/http"
+    "net/http"
 
-	"github.com/dgravesa/ginlambda"
-	"github.com/gin-gonic/gin"
+    "github.com/dgravesa/ginlambda"
+    "github.com/gin-gonic/gin"
 )
 
 var r *gin.Engine
 
 func init() {
-	r = gin.Default()
-	r.GET("/greeting", func(c *gin.Context) {
-		c.String(http.StatusOK, "Hello, World!")
-	})
+    r = gin.Default()
+    r.GET("/greeting", func(c *gin.Context) {
+        c.String(http.StatusOK, "Hello, World!")
+    })
 }
 
 func main() {
     // equivalent to lambda.Start(handler)
-	ginlambda.Start(r)
+    ginlambda.Start(r)
 }
 ```
 
