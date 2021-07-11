@@ -199,24 +199,140 @@ func Test_HandlerFunc_WithMultiValueQueryParams_ReturnsExpectedResult(t *testing
 
 func Test_HandlerFunc_WithRequestBody_ReturnsExpectedResult(t *testing.T) {
 	// arrange
+	type requestBody struct {
+		Name         string `json:"name" binding:"required"`
+		GreetingType string `json:"greetingType" binding:"oneof=morning afternoon evening"`
+	}
+	type responseBody struct {
+		Greeting string `json:"greeting"`
+	}
+	type errorResponseBody struct {
+		ErrorText string `json:"errorText"`
+	}
+	r := gin.New()
+	r.POST("/create-greeting", func(c *gin.Context) {
+		var request requestBody
+		err := c.BindJSON(&request)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, errorResponseBody{err.Error()})
+			return
+		}
+
+		greetingFmt := map[string]string{
+			"morning":   "Good morning, %s!",
+			"afternoon": "Great afternoon, %s!",
+			"evening":   "Fair evening, %s!",
+		}[request.GreetingType]
+
+		greeting := fmt.Sprintf(greetingFmt, request.Name)
+		c.JSON(http.StatusCreated, responseBody{greeting})
+	})
+	handler := ginlambda.NewHandler(r)
+	// construct test request
+	request := events.APIGatewayProxyRequest{
+		HTTPMethod: "POST",
+		Path:       "/create-greeting",
+		Body:       `{"name":"Janet","greetingType":"morning"}`,
+	}
+	expectedResponse := responseBody{
+		Greeting: "Good morning, Janet!",
+	}
 
 	// act
+	response, err := handler(context.Background(), request)
 
 	// assert
+	if err != nil {
+		t.Fatal("expected nil, received error:", err)
+	}
+	var actualResponse responseBody
+	unmarshalJSONString(t, response.Body, &actualResponse)
+	if expectedResponse != actualResponse {
+		t.Errorf("expected: %v, received: %v\n", expectedResponse, actualResponse)
+	}
+	if http.StatusCreated != response.StatusCode {
+		t.Errorf("expected status code: %d, received status code: %d\n", http.StatusCreated, response.StatusCode)
+	}
 }
 
 func Test_HandlerFunc_WithSingleValueHeaders_ReturnsExpectedResult(t *testing.T) {
 	// arrange
+	type responseBody struct {
+		Greeting string `json:"greeting"`
+	}
+	r := gin.New()
+	r.GET("/greeting", func(c *gin.Context) {
+		userID := c.GetHeader("x-user-id")
+		greeting := fmt.Sprintf("Good morning, %s!", userID)
+		c.JSON(http.StatusOK, responseBody{greeting})
+	})
+	handler := ginlambda.NewHandler(r)
+	// construct test request
+	request := events.APIGatewayProxyRequest{
+		HTTPMethod: "GET",
+		Path:       "/greeting",
+		Headers: map[string]string{
+			"x-user-id": "Latiffany",
+		},
+	}
+	expectedResponse := responseBody{
+		Greeting: "Good morning, Latiffany!",
+	}
 
 	// act
+	response, err := handler(context.Background(), request)
 
 	// assert
+	if err != nil {
+		t.Fatal("expected nil, received error:", err)
+	}
+	var actualResponse responseBody
+	unmarshalJSONString(t, response.Body, &actualResponse)
+	if expectedResponse != actualResponse {
+		t.Errorf("expected: %v, received: %v\n", expectedResponse, actualResponse)
+	}
+	if http.StatusOK != response.StatusCode {
+		t.Errorf("expected status code: %d, received status code: %d\n", http.StatusOK, response.StatusCode)
+	}
 }
 
 func Test_HandlerFunc_WithMultiValueHeaders_ReturnsExpectedResult(t *testing.T) {
 	// arrange
+	type responseBody struct {
+		Greeting string `json:"greeting"`
+	}
+	r := gin.New()
+	r.GET("/greeting", func(c *gin.Context) {
+		userID := c.GetHeader("x-user-id")
+		greeting := fmt.Sprintf("Good morning, %s!", userID)
+		c.JSON(http.StatusOK, responseBody{greeting})
+	})
+	handler := ginlambda.NewHandler(r)
+	// construct test request
+	request := events.APIGatewayProxyRequest{
+		HTTPMethod: "GET",
+		Path:       "/greeting",
+		MultiValueHeaders: map[string][]string{
+			"x-user-id": {"Buddy"},
+		},
+	}
+	expectedResponse := responseBody{
+		Greeting: "Good morning, Buddy!",
+	}
 
 	// act
+	response, err := handler(context.Background(), request)
 
 	// assert
+	if err != nil {
+		t.Fatal("expected nil, received error:", err)
+	}
+	var actualResponse responseBody
+	unmarshalJSONString(t, response.Body, &actualResponse)
+	if expectedResponse != actualResponse {
+		t.Errorf("expected: %v, received: %v\n", expectedResponse, actualResponse)
+	}
+	if http.StatusOK != response.StatusCode {
+		t.Errorf("expected status code: %d, received status code: %d\n", http.StatusOK, response.StatusCode)
+	}
 }
