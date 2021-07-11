@@ -40,7 +40,7 @@ func main() {
 
 There are two benefits to using `ginlambda` instead. First and foremost, `ginlambda` has a much smaller dependency tree,
 as it's only meant to support Gin. The AWS Labs module has indirect dependencies from a plethora of frameworks,
-so for example you're depending on Iris and its dependencies even if you aren't using Iris.
+so for example you're depending on Iris and Negroni and their dependencies even if you aren't using them.
 
 Second, `ginlambda` can save you two lines of code by using `ginlambda.Start()`.
 This translates to roughly 200 bytes, saving you precious disk space.
