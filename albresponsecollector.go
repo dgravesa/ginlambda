@@ -33,11 +33,10 @@ func (rc *albResponseCollector) WriteHeader(statusCode int) {
 	rc.statusCode = statusCode
 }
 
-func (rc *albResponseCollector) ToALBTargetGroupResponse() events.ALBTargetGroupResponse {
-	response := events.ALBTargetGroupResponse{
-		StatusCode:        rc.statusCode,
-		StatusDescription: http.StatusText(rc.statusCode),
-		Body:              rc.stringbuilder.String(),
+func (rc *albResponseCollector) ToAPIGatewayProxyResponse() events.APIGatewayProxyResponse {
+	response := events.APIGatewayProxyResponse{
+		StatusCode: rc.statusCode,
+		Body:       rc.stringbuilder.String(),
 	}
 
 	if rc.useMultiValueHeader {
