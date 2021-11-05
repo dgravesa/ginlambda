@@ -7,33 +7,33 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 )
 
-type albResponseCollector struct {
+type apiResponseCollector struct {
 	header              map[string][]string
 	stringbuilder       strings.Builder
 	statusCode          int
 	useMultiValueHeader bool
 }
 
-func newALBResponseCollector(useMultiValueHeader bool) *albResponseCollector {
-	return &albResponseCollector{
+func newAPIResponseCollector(useMultiValueHeader bool) *apiResponseCollector {
+	return &apiResponseCollector{
 		header:              make(map[string][]string),
 		useMultiValueHeader: useMultiValueHeader,
 	}
 }
 
-func (rc *albResponseCollector) Header() http.Header {
+func (rc *apiResponseCollector) Header() http.Header {
 	return rc.header
 }
 
-func (rc *albResponseCollector) Write(p []byte) (int, error) {
+func (rc *apiResponseCollector) Write(p []byte) (int, error) {
 	return rc.stringbuilder.Write(p)
 }
 
-func (rc *albResponseCollector) WriteHeader(statusCode int) {
+func (rc *apiResponseCollector) WriteHeader(statusCode int) {
 	rc.statusCode = statusCode
 }
 
-func (rc *albResponseCollector) ToAPIGatewayProxyResponse() events.APIGatewayProxyResponse {
+func (rc *apiResponseCollector) ToAPIGatewayProxyResponse() events.APIGatewayProxyResponse {
 	response := events.APIGatewayProxyResponse{
 		StatusCode: rc.statusCode,
 		Body:       rc.stringbuilder.String(),

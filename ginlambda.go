@@ -34,7 +34,7 @@ func NewHandler(r *gin.Engine) HandlerFunc {
 			return events.APIGatewayProxyResponse{}, err
 		}
 
-		collector := newALBResponseCollector(useMultiValueHeader)
+		collector := newAPIResponseCollector(useMultiValueHeader)
 
 		r.ServeHTTP(collector, httpRequest)
 
